@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.secrets/
+
+# Personal Oura data and generated outputs
+data/
+exports/
+output/
+*.parquet
+*.csv
+*.json
+*.jsonl
+*.zip
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
