@@ -1,30 +1,21 @@
 # Architecture
 
-The project is split into boundaries so that authentication, remote access,
-ingestion, and persistence can evolve independently.
-
 ```text
 CLI
- ├── official export importer ──> validation / normalization ──> local storage
- └── OAuth auth ──> API client ──> transient analysis
-                                      (persistence only if terms allow)
+ ├── auth.py ──> Oura OAuth2 authorization code + PKCE
+ │                └── OS keychain (client credentials + rotating tokens)
+ └── sleep.py ──> client.py ──> Oura API v2
+                                  └── response objects in memory only
 ```
 
-## Planned modules
+## Boundaries
 
-- `auth.py`: OAuth 2.0 authorization and secure credential handling.
-- `client.py`: thin HTTP client for documented Oura API endpoints.
-- `exports.py`: ingest files obtained through Oura's official account export.
-- `storage.py`: explicit local filesystem and Parquet operations.
-- `config.py`: paths and non-secret settings.
-- `cli.py`: user-facing commands.
+- `auth.py`: OAuth authorization, callback validation, PKCE, token refresh, keychain storage.
+- `client.py`: authenticated HTTP transport, error handling, generic pagination.
+- `sleep.py`: endpoint-specific daily sleep helper.
+- `exports.py`: separate importer for files obtained through Oura's official account export.
+- `storage.py`: local directory helpers; not used to persist API responses.
 
-## Design principles
+## API data handling
 
-1. Local-first: personal files and credentials stay on the user's machine.
-2. Explicit persistence: network responses are not silently written to disk.
-3. Traceable transformations: preserve raw official exports and write derived
-   datasets separately.
-4. Small interfaces: keep the API client independent from analysis/storage.
-5. Terms-aware: confirm Oura's current developer agreement before enabling
-   API data retention, sharing, or downstream integrations.
+The current Oura API agreement restricts API data retention to the duration strictly necessary. API responses are therefore returned to the calling process and not implicitly cached or written to disk. Revisit this only after confirming written authorization or updated applicable terms.
