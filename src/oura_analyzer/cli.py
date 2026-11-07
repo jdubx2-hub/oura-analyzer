@@ -69,18 +69,24 @@ def auth_status_command() -> None:
 
 @app.command("sleep")
 def sleep_command(
-    start_date: date = typer.Option(..., "--start-date", help="First day, YYYY-MM-DD."),
-    end_date: date = typer.Option(..., "--end-date", help="Last day, YYYY-MM-DD."),
+    start_date: str = typer.Option(..., "--start-date", help="First day, YYYY-MM-DD."),
+    end_date: str = typer.Option(..., "--end-date", help="Last day, YYYY-MM-DD."),
     show_json: bool = typer.Option(False, "--show-json", help="Print full response documents to stdout."),
 ) -> None:
     """Fetch daily sleep summaries for a date range (does not save API data)."""
-    if end_date < start_date:
+    try:
+        parsed_start = date.fromisoformat(start_date)
+        parsed_end = date.fromisoformat(end_date)
+    except ValueError as exc:
+        typer.echo("Dates must use YYYY-MM-DD format.", err=True)
+        raise typer.Exit(code=2) from exc
+    if parsed_end < parsed_start:
         typer.echo("--end-date must be on or after --start-date", err=True)
         raise typer.Exit(code=2)
     try:
         token = get_access_token()
         with OuraAPIClient(token) as client:
-            records = get_daily_sleep(client, start_date=start_date, end_date=end_date)
+            records = get_daily_sleep(client, start_date=parsed_start, end_date=parsed_end)
     except (OAuthError, OuraAPIError) as exc:
         typer.echo(f"Request failed: {exc}", err=True)
         raise typer.Exit(code=1) from exc
