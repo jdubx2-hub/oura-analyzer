@@ -1,0 +1,34 @@
+[project]
+name = "oura-analyzer"
+version = "0.1.0"
+description = "Local-first tools for importing and exploring personal Oura data"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+api = ["httpx>=0.27", "keyring>=25"]
+data = ["pandas>=2.2", "pyarrow>=17"]
+dev = ["pytest>=8.3", "ruff>=0.6"]
+
+[project.scripts]
+oura = "oura_analyzer.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/oura_analyzer"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
