@@ -25,7 +25,7 @@ AUTHORIZE_URL = "https://cloud.ouraring.com/oauth/authorize"
 TOKEN_URL = "https://api.ouraring.com/oauth/token"
 REDIRECT_URI = "http://localhost:8765/callback"
 CALLBACK_PATH = "/callback"
-SCOPES = ("daily",)
+SCOPES = ("daily", "workout")
 
 
 class OAuthError(RuntimeError):
