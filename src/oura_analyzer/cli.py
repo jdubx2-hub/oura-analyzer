@@ -12,6 +12,7 @@ from oura_analyzer.client import OuraAPIError, OuraAPIClient
 from oura_analyzer.exports import inspect_export
 from oura_analyzer.sleep import get_daily_sleep
 from oura_analyzer.storage import ensure_data_dir
+from oura_analyzer.workouts import get_workouts
 
 app = typer.Typer(help="Import and explore your personal Oura data.")
 auth_app = typer.Typer(help="Manage Oura OAuth authorization.")
@@ -67,13 +68,8 @@ def auth_status_command() -> None:
     typer.echo(json.dumps(status, indent=2))
 
 
-@app.command("sleep")
-def sleep_command(
-    start_date: str = typer.Option(..., "--start-date", help="First day, YYYY-MM-DD."),
-    end_date: str = typer.Option(..., "--end-date", help="Last day, YYYY-MM-DD."),
-    show_json: bool = typer.Option(False, "--show-json", help="Print full response documents to stdout."),
-) -> None:
-    """Fetch daily sleep summaries for a date range (does not save API data)."""
+def _parse_date_range(start_date: str, end_date: str) -> tuple[date, date]:
+    """Parse and validate the inclusive date range shared by data commands."""
     try:
         parsed_start = date.fromisoformat(start_date)
         parsed_end = date.fromisoformat(end_date)
@@ -83,6 +79,17 @@ def sleep_command(
     if parsed_end < parsed_start:
         typer.echo("--end-date must be on or after --start-date", err=True)
         raise typer.Exit(code=2)
+    return parsed_start, parsed_end
+
+
+@app.command("sleep")
+def sleep_command(
+    start_date: str = typer.Option(..., "--start-date", help="First day, YYYY-MM-DD."),
+    end_date: str = typer.Option(..., "--end-date", help="Last day, YYYY-MM-DD."),
+    show_json: bool = typer.Option(False, "--show-json", help="Print full response documents to stdout."),
+) -> None:
+    """Fetch daily sleep summaries for a date range (does not save API data)."""
+    parsed_start, parsed_end = _parse_date_range(start_date, end_date)
     try:
         token = get_access_token()
         with OuraAPIClient(token) as client:
@@ -99,6 +106,38 @@ def sleep_command(
             day = record.get("day", "unknown day")
             score = record.get("score", "score unavailable")
             typer.echo(f"{day}: score={score}")
+
+
+@app.command("workouts")
+def workouts_command(
+    start_date: str = typer.Option(..., "--start-date", help="First day, YYYY-MM-DD."),
+    end_date: str = typer.Option(..., "--end-date", help="Last day, YYYY-MM-DD."),
+    show_json: bool = typer.Option(False, "--show-json", help="Print full response documents to stdout."),
+) -> None:
+    """Fetch workout records for a date range (does not save API data)."""
+    parsed_start, parsed_end = _parse_date_range(start_date, end_date)
+    try:
+        token = get_access_token()
+        with OuraAPIClient(token) as client:
+            records = get_workouts(client, start_date=parsed_start, end_date=parsed_end)
+    except (OAuthError, OuraAPIError) as exc:
+        typer.echo(f"Request failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(f"Retrieved {len(records)} workout records. Nothing was written to disk.")
+    if show_json:
+        typer.echo(json.dumps(records, indent=2, default=str))
+    else:
+        for record in records:
+            day = record.get("day", "unknown day")
+            activity = record.get("activity") or record.get("label") or "workout"
+            details = []
+            if record.get("intensity"):
+                details.append(f"intensity={record['intensity']}")
+            if record.get("calories") is not None:
+                details.append(f"calories={record['calories']}")
+            detail_text = f" ({', '.join(details)})" if details else ""
+            typer.echo(f"{day}: {activity}{detail_text}")
 
 
 if __name__ == "__main__":
