@@ -136,6 +136,9 @@ def workouts_command(
                 details.append(f"intensity={record['intensity']}")
             if record.get("calories") is not None:
                 details.append(f"calories={record['calories']}")
+            if record.get("distance") is not None:
+                distance_miles = record["distance"] / 1609.344
+                details.append(f"distance={distance_miles:.2f} mi")
             detail_text = f" ({', '.join(details)})" if details else ""
             typer.echo(f"{day}: {activity}{detail_text}")
 
