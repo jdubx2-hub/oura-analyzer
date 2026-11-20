@@ -4,15 +4,17 @@
 CLI
  ├── auth.py ──> Oura OAuth2 authorization code + PKCE
  │                └── OS keychain (client credentials + rotating tokens)
- └── sleep.py ──> client.py ──> Oura API v2
+ ├── sleep.py ──> client.py ──> Oura API v2 /usercollection/daily_sleep
+ └── workouts.py ─> client.py ──> Oura API v2 /usercollection/workout
                                   └── response objects in memory only
 ```
 
 ## Boundaries
 
-- `auth.py`: OAuth authorization, callback validation, PKCE, token refresh, keychain storage.
+- `auth.py`: OAuth authorization, callback validation, PKCE, token refresh, keychain storage. Requests the `daily` and `workout` scopes.
 - `client.py`: authenticated HTTP transport, error handling, generic pagination.
 - `sleep.py`: endpoint-specific daily sleep helper.
+- `workouts.py`: endpoint-specific workout helper.
 - `exports.py`: separate importer for files obtained through Oura's official account export.
 - `storage.py`: local directory helpers; not used to persist API responses.
 
