@@ -116,7 +116,9 @@ def sleep_command(
 def workouts_command(
     start_date: str = typer.Option(..., "--start-date", help="First day, YYYY-MM-DD."),
     end_date: str = typer.Option(..., "--end-date", help="Last day, YYYY-MM-DD."),
-    show_json: bool = typer.Option(False, "--show-json", help="Print full response documents to stdout."),
+    show_json: bool = typer.Option(
+        False, "--show-json", help="Print full response documents to stdout."
+    ),
 ) -> None:
     """Fetch workout records for a date range (does not save API data)."""
     parsed_start, parsed_end = _parse_date_range(start_date, end_date)
