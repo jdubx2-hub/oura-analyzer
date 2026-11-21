@@ -61,7 +61,7 @@ uv run oura workouts --start-date 2026-10-01 --end-date 2026-10-31
 
 The default output shows the workout date, activity, intensity (when available), and calories (when available). Add `--show-json` to print the full workout documents.
 
-Both API commands handle pagination and keep API response data in memory only; they do not save or cache it.
+All API commands handle pagination and keep API response data in memory only; they do not save or cache it.
 
 ## Collect JMT-relevant Oura data
 
