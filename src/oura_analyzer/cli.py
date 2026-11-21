@@ -10,7 +10,7 @@ import typer
 from oura_analyzer.auth import OAuthError, auth_status, get_access_token, login
 from oura_analyzer.bundle import collect_oura_data
 from oura_analyzer.client import OuraAPIError, OuraAPIClient
-from oura_analyzer.exports import inspect_export
+from oura_analyzer.exports import build_export_package, inspect_export, write_export_package
 from oura_analyzer.heart_rate import get_heart_rate
 from oura_analyzer.sleep import get_daily_sleep
 from oura_analyzer.storage import ensure_data_dir
@@ -222,6 +222,58 @@ def collect_command(
 
     if show_json:
         typer.echo(json.dumps(result, indent=2, default=str))
+
+
+@app.command("export")
+def export_command(
+    start_date: str = typer.Option(..., "--start-date", help="First day, YYYY-MM-DD."),
+    end_date: str = typer.Option(..., "--end-date", help="Last day, YYYY-MM-DD."),
+    output: Path = typer.Option(
+        Path("oura-jmt-export.json"),
+        "--output",
+        "-o",
+        help="Destination JSON file.",
+    ),
+    include_heart_rate: bool = typer.Option(
+        False,
+        "--include-heart-rate",
+        help="Include timestamped heart-rate samples (higher volume).",
+    ),
+    timezone_name: str = typer.Option(
+        "America/Los_Angeles",
+        "--timezone",
+        help="IANA timezone used to define the date range for heart-rate samples.",
+    ),
+) -> None:
+    """Collect Oura data and write one versioned JSON package."""
+    parsed_start, parsed_end = _parse_date_range(start_date, end_date)
+    try:
+        token = get_access_token()
+        with OuraAPIClient(token) as client:
+            collection = collect_oura_data(
+                client,
+                start_date=parsed_start,
+                end_date=parsed_end,
+                include_heart_rate=include_heart_rate,
+                timezone_name=timezone_name,
+            )
+        package = build_export_package(collection)
+        destination = write_export_package(package, output)
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    except (OAuthError, OuraAPIError, OSError) as exc:
+        typer.echo(f"Export failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    datasets = package["datasets"]
+    total_records = sum(len(records) for records in datasets.values())
+    typer.echo(f"Wrote {total_records} records across {len(datasets)} datasets.")
+    typer.echo(f"Export: {destination.resolve()}")
+    for name, records in datasets.items():
+        typer.echo(f"  {name}: {len(records)} records")
+    for name, error in package["errors"].items():
+        typer.echo(f"  {name}: unavailable ({error})")
 
 
 if __name__ == "__main__":
