@@ -11,6 +11,7 @@ from oura_analyzer.auth import OAuthError, auth_status, get_access_token, login
 from oura_analyzer.bundle import collect_oura_data
 from oura_analyzer.client import OuraAPIError, OuraAPIClient
 from oura_analyzer.exports import inspect_export
+from oura_analyzer.heart_rate import get_heart_rate
 from oura_analyzer.sleep import get_daily_sleep
 from oura_analyzer.storage import ensure_data_dir
 from oura_analyzer.workouts import get_workouts
@@ -142,6 +143,44 @@ def workouts_command(
                 details.append(f"distance={distance_miles:.2f} mi")
             detail_text = f" ({', '.join(details)})" if details else ""
             typer.echo(f"{day}: {activity}{detail_text}")
+
+
+@app.command("heart-rate")
+def heart_rate_command(
+    start_datetime: str = typer.Option(
+        ...,
+        "--start-datetime",
+        help="Start timestamp with timezone offset, e.g. 2026-10-01T00:00:00-07:00.",
+    ),
+    end_datetime: str = typer.Option(
+        ...,
+        "--end-datetime",
+        help="End timestamp with timezone offset, e.g. 2026-10-02T00:00:00-07:00.",
+    ),
+    show_json: bool = typer.Option(False, "--show-json", help="Print full heart-rate samples."),
+) -> None:
+    """Fetch timestamped heart-rate samples for a timezone-aware interval."""
+    try:
+        token = get_access_token()
+        with OuraAPIClient(token) as client:
+            records = get_heart_rate(
+                client,
+                start_datetime=start_datetime,
+                end_datetime=end_datetime,
+            )
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    except (OAuthError, OuraAPIError) as exc:
+        typer.echo(f"Request failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(f"Retrieved {len(records)} heart-rate samples. Nothing was written to disk.")
+    if show_json:
+        typer.echo(json.dumps(records, indent=2, default=str))
+    elif records:
+        typer.echo(f"First sample: {records[0].get('timestamp')} ({records[0].get('bpm')} bpm)")
+        typer.echo(f"Last sample: {records[-1].get('timestamp')} ({records[-1].get('bpm')} bpm)")
 
 
 @app.command("collect")
