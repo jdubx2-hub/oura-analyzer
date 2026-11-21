@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
-from typing import Any, Callable
+from typing import Any
 
 from oura_analyzer.activity import get_daily_activity
 from oura_analyzer.cardiovascular_age import get_daily_cardiovascular_age
