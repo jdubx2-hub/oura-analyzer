@@ -47,7 +47,11 @@ def build_export_package(
             "date_range": {
                 "start_date": date_range["start_date"],
                 "end_date": date_range["end_date"],
-                **({"timezone": date_range["timezone"]} if date_range.get("timezone") else {}),
+                **(
+                    {"timezone": date_range["timezone"]}
+                    if date_range.get("timezone")
+                    else {}
+                ),
             },
             "datasets_included": sorted(collection["datasets"]),
             "datasets_with_errors": sorted(collection.get("errors", {})),
