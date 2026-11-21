@@ -55,6 +55,22 @@ class OuraAPIClient:
             raise OuraAPIError(f"Oura API request failed ({response.status_code}): {detail}")
         return response.json()
 
+    def iter_pages(
+        self,
+        endpoint: str,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> Iterator[dict[str, Any]]:
+        """Yield documents from a paginated endpoint using arbitrary query parameters."""
+        page_params = dict(params or {})
+        while True:
+            payload = self.get(endpoint, params=page_params)
+            yield from payload.get("data", [])
+            next_token = payload.get("next_token")
+            if not next_token:
+                break
+            page_params["next_token"] = next_token
+
     def iter_documents(
         self,
         endpoint: str,
@@ -62,17 +78,12 @@ class OuraAPIClient:
         start_date: date | str | None = None,
         end_date: date | str | None = None,
     ) -> Iterator[dict[str, Any]]:
-        """Yield all documents from a paginated Oura collection endpoint."""
+        """Yield all documents from a date-filtered Oura collection endpoint."""
         params: dict[str, str] = {}
         if start_date is not None:
-            params["start_date"] = start_date.isoformat() if isinstance(start_date, date) else start_date
+            params["start_date"] = (
+                start_date.isoformat() if isinstance(start_date, date) else start_date
+            )
         if end_date is not None:
             params["end_date"] = end_date.isoformat() if isinstance(end_date, date) else end_date
-
-        while True:
-            payload = self.get(endpoint, params=params)
-            yield from payload.get("data", [])
-            next_token = payload.get("next_token")
-            if not next_token:
-                break
-            params["next_token"] = next_token
+        yield from self.iter_pages(endpoint, params=params)
