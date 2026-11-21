@@ -11,13 +11,12 @@ from oura_analyzer.client import OuraAPIClient
 HEART_RATE_ENDPOINT = "/usercollection/heartrate"
 
 
-def _format_datetime(value: datetime | str) -> str:
-    """Format a datetime while requiring an explicit timezone offset."""
-    if isinstance(value, datetime):
-        if value.tzinfo is None or value.utcoffset() is None:
-            raise ValueError("Heart-rate datetimes must be timezone-aware.")
-        return value.isoformat()
-    return value
+def _parse_datetime(value: datetime | str) -> datetime:
+    """Parse a datetime while requiring an explicit timezone offset."""
+    parsed = value if isinstance(value, datetime) else datetime.fromisoformat(value)
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError("Heart-rate datetimes must include a timezone offset.")
+    return parsed
 
 
 def iter_heart_rate(
@@ -28,16 +27,19 @@ def iter_heart_rate(
 ) -> Iterator[dict[str, Any]]:
     """Yield heart-rate samples for a timezone-aware datetime interval.
 
-    Oura returns timestamped samples at approximately five-minute intervals.
+    Oura returns samples at approximately five-minute intervals.
     """
-    start = _format_datetime(start_datetime)
-    end = _format_datetime(end_datetime)
+    start = _parse_datetime(start_datetime)
+    end = _parse_datetime(end_datetime)
     if end <= start:
         raise ValueError("end_datetime must be after start_datetime.")
 
     yield from client.iter_pages(
         HEART_RATE_ENDPOINT,
-        params={"start_datetime": start, "end_datetime": end},
+        params={
+            "start_datetime": start.isoformat(),
+            "end_datetime": end.isoformat(),
+        },
     )
 
 
