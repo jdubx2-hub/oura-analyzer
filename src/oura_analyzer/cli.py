@@ -88,7 +88,9 @@ def _parse_date_range(start_date: str, end_date: str) -> tuple[date, date]:
 def sleep_command(
     start_date: str = typer.Option(..., "--start-date", help="First day, YYYY-MM-DD."),
     end_date: str = typer.Option(..., "--end-date", help="Last day, YYYY-MM-DD."),
-    show_json: bool = typer.Option(False, "--show-json", help="Print full response documents to stdout."),
+    show_json: bool = typer.Option(
+        False, "--show-json", help="Print full response documents to stdout."
+    ),
 ) -> None:
     """Fetch daily sleep summaries for a date range (does not save API data)."""
     parsed_start, parsed_end = _parse_date_range(start_date, end_date)
@@ -187,7 +189,9 @@ def heart_rate_command(
 def collect_command(
     start_date: str = typer.Option(..., "--start-date", help="First day, YYYY-MM-DD."),
     end_date: str = typer.Option(..., "--end-date", help="Last day, YYYY-MM-DD."),
-    show_json: bool = typer.Option(False, "--show-json", help="Print the collected datasets as JSON."),
+    show_json: bool = typer.Option(
+        False, "--show-json", help="Print the collected datasets as JSON."
+    ),
 ) -> None:
     """Collect the date-scoped Oura datasets used by the JMT training workflow."""
     parsed_start, parsed_end = _parse_date_range(start_date, end_date)
