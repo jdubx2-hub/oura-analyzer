@@ -8,6 +8,7 @@ import keyring
 import typer
 
 from oura_analyzer.auth import OAuthError, auth_status, get_access_token, login
+from oura_analyzer.bundle import collect_oura_data
 from oura_analyzer.client import OuraAPIError, OuraAPIClient
 from oura_analyzer.exports import inspect_export
 from oura_analyzer.sleep import get_daily_sleep
@@ -141,6 +142,41 @@ def workouts_command(
                 details.append(f"distance={distance_miles:.2f} mi")
             detail_text = f" ({', '.join(details)})" if details else ""
             typer.echo(f"{day}: {activity}{detail_text}")
+
+
+@app.command("collect")
+def collect_command(
+    start_date: str = typer.Option(..., "--start-date", help="First day, YYYY-MM-DD."),
+    end_date: str = typer.Option(..., "--end-date", help="Last day, YYYY-MM-DD."),
+    show_json: bool = typer.Option(False, "--show-json", help="Print the collected datasets as JSON."),
+) -> None:
+    """Collect the date-scoped Oura datasets used by the JMT training workflow."""
+    parsed_start, parsed_end = _parse_date_range(start_date, end_date)
+    try:
+        token = get_access_token()
+        with OuraAPIClient(token) as client:
+            result = collect_oura_data(
+                client,
+                start_date=parsed_start,
+                end_date=parsed_end,
+            )
+    except (OAuthError, OuraAPIError) as exc:
+        typer.echo(f"Collection failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    datasets = result["datasets"]
+    total_records = sum(len(records) for records in datasets.values())
+    typer.echo(
+        f"Collected {total_records} records across {len(datasets)} datasets "
+        f"for {parsed_start} through {parsed_end}."
+    )
+    for name, records in datasets.items():
+        typer.echo(f"  {name}: {len(records)} records")
+    for name, error in result["errors"].items():
+        typer.echo(f"  {name}: unavailable ({error})", err=True)
+
+    if show_json:
+        typer.echo(json.dumps(result, indent=2, default=str))
 
 
 if __name__ == "__main__":
