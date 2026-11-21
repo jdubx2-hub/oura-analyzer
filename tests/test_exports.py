@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 import json
 
@@ -47,6 +47,7 @@ def test_build_export_package_adds_manifest_without_mutating_records() -> None:
     assert package["manifest"]["date_range"] == {
         "start_date": "2026-10-01",
         "end_date": "2026-10-31",
+        "timezone": "America/Los_Angeles",
     }
     assert package["manifest"]["datasets_included"] == ["daily_sleep", "workouts"]
     assert package["manifest"]["datasets_with_errors"] == ["daily_spo2"]
