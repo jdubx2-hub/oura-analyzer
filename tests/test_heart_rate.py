@@ -19,7 +19,8 @@ def test_heart_rate_uses_datetime_filters_and_pagination() -> None:
             json={"data": [{"bpm": 68}], "next_token": "page-2"},
         )
 
-    with OuraAPIClient("test-token", transport=httpx.MockTransport(handler)) as client:
+    transport = httpx.MockTransport(handler)
+    with OuraAPIClient("test-token", transport=transport) as client:
         rows = get_heart_rate(
             client,
             start_datetime=datetime.fromisoformat("2026-10-01T00:00:00-07:00"),
@@ -34,7 +35,8 @@ def test_heart_rate_uses_datetime_filters_and_pagination() -> None:
 
 
 def test_heart_rate_rejects_naive_datetime() -> None:
-    with OuraAPIClient("test-token", transport=httpx.MockTransport(lambda _: httpx.Response(200, json={"data": []}))) as client:
+    transport = httpx.MockTransport(lambda _: httpx.Response(200, json={"data": []}))
+    with OuraAPIClient("test-token", transport=transport) as client:
         with pytest.raises(ValueError, match="timezone offset"):
             get_heart_rate(
                 client,
@@ -44,7 +46,8 @@ def test_heart_rate_rejects_naive_datetime() -> None:
 
 
 def test_heart_rate_rejects_reversed_range() -> None:
-    with OuraAPIClient("test-token", transport=httpx.MockTransport(lambda _: httpx.Response(200, json={"data": []}))) as client:
+    transport = httpx.MockTransport(lambda _: httpx.Response(200, json={"data": []}))
+    with OuraAPIClient("test-token", transport=transport) as client:
         with pytest.raises(ValueError, match="after"):
             get_heart_rate(
                 client,
