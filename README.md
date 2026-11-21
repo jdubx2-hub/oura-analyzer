@@ -61,7 +61,7 @@ uv run oura workouts --start-date 2026-10-01 --end-date 2026-10-31
 
 The default output shows the workout date, activity, intensity (when available), and calories (when available). Add `--show-json` to print the full workout documents.
 
-All API commands handle pagination and keep API response data in memory only; they do not save or cache it.
+Collection commands handle pagination and keep API response data in memory only; they do not save or cache it. The explicit `export` command writes a user-requested JSON package.
 
 ## Collect JMT-relevant Oura data
 
@@ -79,6 +79,33 @@ Add `--show-json` to print the combined response:
 uv run oura collect --start-date 2026-10-01 --end-date 2026-10-31 --show-json
 ```
 
+## Create a JMT export package
+
+Create one versioned JSON file containing all date-scoped datasets:
+
+```bash
+uv run oura export \
+  --start-date 2026-10-01 \
+  --end-date 2026-10-31 \
+  --output exports/oura-jmt-export.json
+```
+
+The package includes a manifest (schema version, source, generation timestamp, date range, timezone, included datasets, and endpoint errors) plus the original Oura API records grouped by dataset. Raw source fields are preserved so the downstream JMT Planner importer can evolve without losing information.
+
+Heart-rate samples are higher-volume and excluded by default. Include them explicitly when needed:
+
+```bash
+uv run oura export \
+  --start-date 2026-10-01 \
+  --end-date 2026-10-31 \
+  --include-heart-rate \
+  --timezone America/Los_Angeles \
+  --output exports/oura-jmt-export.json
+```
+
+The timezone is an IANA timezone name. Local midnight boundaries are converted separately for the start and end dates, so daylight-saving transitions are handled correctly.
+
+
 ## Fetch detailed heart-rate samples
 
 Heart rate is a timestamped time series, so it uses timezone-aware datetime bounds rather than calendar dates:
@@ -93,7 +120,7 @@ Use `--show-json` to print the individual samples. The API returns heart-rate sa
 
 ## Data handling and Oura terms
 
-Oura's API agreement restricts retaining API data beyond the duration strictly necessary and restricts certain onward sharing and AI-platform uses. This project therefore keeps API responses in memory for the immediate command and does not write them to `data/` or other local files. Review the current [Oura API and MCP Agreement](https://cloud.ouraring.com/legal/api-agreement) before changing this behavior.
+Oura's API agreement includes restrictions on retaining API data and onward sharing. The `export` command is an explicit user-triggered file write; review the current [Oura API and MCP Agreement](https://cloud.ouraring.com/legal/api-agreement) and determine your intended handling before using it with real account data. Other collection commands keep responses in memory.
 
 Never paste personal health records, tokens, or client secrets into public issues or commit them to Git.
 
