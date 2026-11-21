@@ -36,4 +36,4 @@ def test_collect_oura_data_keeps_successful_datasets_when_one_endpoint_fails(
     }
     assert result["datasets"]["workouts"] == [{"id": "workout-1"}]
     assert "sleep_periods" not in result["datasets"]
-    assert result["errors"] == {"sleep_periods": "Oura API request failed (403): missing scope"}
+    assert result["errors"] == {"sleep_periods": "403: missing scope"}
