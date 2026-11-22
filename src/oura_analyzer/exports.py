@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 EXPORT_SCHEMA_VERSION = "1.0.0"
 
@@ -33,7 +32,7 @@ def build_export_package(
     Dataset records remain unchanged from the Oura API. This preserves source
     fidelity while giving downstream applications a stable package contract.
     """
-    timestamp = generated_at or datetime.now(timezone.utc)
+    timestamp = generated_at or datetime.now(UTC)
     if timestamp.tzinfo is None or timestamp.utcoffset() is None:
         raise ValueError("generated_at must be timezone-aware.")
 
@@ -43,15 +42,11 @@ def build_export_package(
             "schema": "jmt-oura-export",
             "schema_version": EXPORT_SCHEMA_VERSION,
             "source": "oura_api_v2",
-            "generated_at": timestamp.astimezone(timezone.utc).isoformat(),
+            "generated_at": timestamp.astimezone(UTC).isoformat(),
             "date_range": {
                 "start_date": date_range["start_date"],
                 "end_date": date_range["end_date"],
-                **(
-                    {"timezone": date_range["timezone"]}
-                    if date_range.get("timezone")
-                    else {}
-                ),
+                **({"timezone": date_range["timezone"]} if date_range.get("timezone") else {}),
             },
             "datasets_included": sorted(collection["datasets"]),
             "datasets_with_errors": sorted(collection.get("errors", {})),

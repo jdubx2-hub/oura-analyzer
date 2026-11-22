@@ -1,4 +1,5 @@
 """Command-line interface."""
+# ruff: noqa: B008
 
 import json
 from datetime import date
@@ -9,7 +10,7 @@ import typer
 
 from oura_analyzer.auth import OAuthError, auth_status, get_access_token, login
 from oura_analyzer.bundle import collect_oura_data
-from oura_analyzer.client import OuraAPIError, OuraAPIClient
+from oura_analyzer.client import OuraAPIClient, OuraAPIError
 from oura_analyzer.exports import build_export_package, inspect_export, write_export_package
 from oura_analyzer.heart_rate import get_heart_rate
 from oura_analyzer.sleep import get_daily_sleep

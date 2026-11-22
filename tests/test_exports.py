@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
-from pathlib import Path
 import json
+from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 
@@ -38,7 +38,7 @@ def test_build_export_package_adds_manifest_without_mutating_records() -> None:
 
     package = build_export_package(
         collection,
-        generated_at=datetime(2026, 11, 21, 12, 0, tzinfo=timezone.utc),
+        generated_at=datetime(2026, 11, 21, 12, 0, tzinfo=UTC),
     )
 
     assert package["manifest"]["schema"] == "jmt-oura-export"

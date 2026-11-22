@@ -32,6 +32,4 @@ def get_daily_cardiovascular_age(
     end_date: date | str | None = None,
 ) -> list[dict[str, Any]]:
     """Return cardiovascular age documents for an optional inclusive date range."""
-    return list(
-        iter_daily_cardiovascular_age(client, start_date=start_date, end_date=end_date)
-    )
+    return list(iter_daily_cardiovascular_age(client, start_date=start_date, end_date=end_date))

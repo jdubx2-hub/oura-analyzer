@@ -98,13 +98,19 @@ def _callback_handler(result: dict, completed: threading.Event, expected_state: 
             returned_state = params.get("state", [""])[0]
             if not hmac.compare_digest(returned_state, expected_state):
                 result["error"] = "OAuth state did not match. Rejecting callback."
-                status, message = 400, "Authorization failed: invalid state. You can close this tab."
+                status, message = (
+                    400,
+                    "Authorization failed: invalid state. You can close this tab.",
+                )
             elif params.get("error"):
                 result["error"] = params.get("error_description", params["error"])[0]
                 status, message = 400, "Authorization was not completed. You can close this tab."
             elif not params.get("code"):
                 result["error"] = "Oura callback did not contain an authorization code."
-                status, message = 400, "Authorization failed: no code received. You can close this tab."
+                status, message = (
+                    400,
+                    "Authorization failed: no code received. You can close this tab.",
+                )
             else:
                 result["code"] = params["code"][0]
                 status, message = 200, "Oura authorization received. You can return to Terminal."
