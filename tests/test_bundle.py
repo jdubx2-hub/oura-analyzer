@@ -4,6 +4,8 @@ import pytest
 
 from oura_analyzer import bundle
 from oura_analyzer.client import OuraAPIError
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 def test_collect_oura_data_keeps_successful_datasets_when_one_endpoint_fails(
@@ -74,8 +76,15 @@ def test_collect_heart_rate_uses_local_midnight_and_dst_aware_boundaries(monkeyp
     )
 
     assert result["datasets"]["heart_rate"] == [{"bpm": 65}]
-    assert captured["start"] == "2026-11-01T00:00:00-07:00"
-    assert captured["end"] == "2026-11-02T00:00:00-08:00"
+    
+    assert captured["start"] == datetime(
+        2026, 11, 1, 0, 0,
+        tzinfo=ZoneInfo("America/Los_Angeles"),
+    )
+    assert captured["end"] == datetime(
+        2026, 11, 2, 0, 0,
+        tzinfo=ZoneInfo("America/Los_Angeles"),
+    )
 
 
 def test_collect_rejects_unknown_timezone_when_heart_rate_requested() -> None:
